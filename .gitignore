@@ -1,0 +1,25 @@
+# ═══════════════════════════════════════════
+# FH5 Optimizer — .gitignore
+# ═══════════════════════════════════════════
+
+# Logs generados por el script (contienen datos del sistema del usuario)
+logs/*.log
+
+# Archivos temporales de Windows
+*.tmp
+~$*
+Thumbs.db
+Desktop.ini
+
+# Archivos temporales de editores
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Archivos de sistema de macOS (si alguien clona en Mac)
+.DS_Store
+
+# PowerShell cache
+*.psm1.bak
