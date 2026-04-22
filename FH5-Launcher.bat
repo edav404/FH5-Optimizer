@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 :: ============================================================================
 :: FH5 Game Optimizer — Launcher
 :: Ejecuta las optimizaciones + abre Spotify + lanza Forza Horizon 5
@@ -60,7 +60,7 @@ echo  (Se abrira una ventana de PowerShell con el monitor)
 echo.
 
 :: Iniciar el optimizador en una nueva ventana de PowerShell
-start "FH5 Optimizer - Monitor" powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp0FH5-GameOptimizer.ps1"
+start "FH5 Optimizer - Monitor" powershell.exe -ExecutionPolicy Bypass -NoProfile -NoExit -File "%~dp0FH5-GameOptimizer.ps1"
 
 :: Esperar a que las optimizaciones iniciales se apliquen
 echo  Esperando 10 segundos para que las optimizaciones se apliquen...

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     FH5 Game Optimizer — Script de Restauración de Emergencia
     Restaura todos los cambios realizados por FH5-GameOptimizer.ps1
@@ -53,7 +53,8 @@ Write-Status "Reiniciando servicios..." "INFO"
 $servicios = @(
     "SysMain", "DiagTrack", "WSearch", "MapsBroker",
     "TabletInputService", "WMPNetworkSvc", "dmwappushservice",
-    "lfsvc", "RetailDemo", "wisvc"
+    "lfsvc", "RetailDemo", "wisvc", "spacedeskService",
+    "AvastSvc", "AvastWscReporter", "aswbIDSAgent", "AvastFirewall"
 )
 
 foreach ($svc in $servicios) {
@@ -63,10 +64,21 @@ foreach ($svc in $servicios) {
             Start-Service -Name $svc -ErrorAction SilentlyContinue
             Write-Status "Servicio reiniciado: $svc" "OK"
         } elseif ($service) {
-            Write-Status "Servicio ya ejecutándose: $svc" "INFO"
+            Write-Status "Servicio ya ejecutandose: $svc" "INFO"
         }
     } catch {
         Write-Status "No se pudo reiniciar $svc (puede no existir)" "WARN"
+    }
+}
+
+# Restaurar auto-proteccion de Avast
+$avastRegPath = "HKLM:\SOFTWARE\Avast Software\Avast"
+if (Test-Path $avastRegPath) {
+    try {
+        Set-ItemProperty -Path $avastRegPath -Name "SelfDefense" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+        Write-Status "Avast auto-proteccion restaurada" "OK"
+    } catch {
+        Write-Status "No se pudo restaurar auto-proteccion de Avast" "WARN"
     }
 }
 

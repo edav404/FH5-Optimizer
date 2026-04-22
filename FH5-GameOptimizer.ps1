@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     FH5 Game Optimizer — Optimización dinámica para Forza Horizon 5
     Diseñado para Lenovo ThinkPad P50 (i7-6700HQ / Quadro M1000M / 16GB RAM)
@@ -55,23 +55,49 @@ $Script:ServiciosOptimizables = @(
     @{ Name = "lfsvc";            Desc = "Servicio de geolocalización — innecesario para gaming" }
     @{ Name = "RetailDemo";       Desc = "Servicio de demostración en tiendas — nunca necesario" }
     @{ Name = "wisvc";            Desc = "Windows Insider — innecesario si no participas en Insider" }
+    @{ Name = "spacedeskService"; Desc = "SpaceDesk — pantalla virtual que consume GPU. Innecesario durante gaming" }
+    # --- Avast Antivirus (temporal, se restaura al salir) ---
+    @{ Name = "AvastSvc";         Desc = "Avast Antivirus Service — motor principal del antivirus" }
+    @{ Name = "AvastWscReporter"; Desc = "Avast WSC Reporter — reporta estado a Windows Security Center" }
+    @{ Name = "aswbIDSAgent";     Desc = "Avast IDS Agent — sistema de deteccion de intrusos" }
+    @{ Name = "avast! Antivirus"; Desc = "Avast Antivirus (nombre legacy) — servicio principal" }
+    @{ Name = "AvastFirewall";    Desc = "Avast Firewall — filtrado de red del antivirus" }
 )
 
-# Procesos de fondo que se pueden suspender temporalmente
-$Script:ProcesosReducibles = @(
-    "SearchUI", "SearchApp", "SearchHost",       # Búsqueda de Windows
-    "OneDrive",                                   # Sincronización en la nube
-    "Teams", "Widgets",                           # Apps no esenciales
-    "PhoneExperienceHost",                        # Tu Teléfono
-    "YourPhone",                                  # Tu Teléfono (legacy)
-    "GameBarPresenceWriter",                      # Barra de juegos (escritor)
-    "BcastDVRUserService",                        # DVR Broadcasting
-    "Calculator", "CalculatorApp",                # Calculadora
-    "SkypeApp", "SkypeBackgroundHost",            # Skype
-    "Microsoft.Photos",                           # Fotos
-    "HxTsr", "HxOutlook",                        # Correo
-    "GrooveMusic",                                # Groove Music
-    "MicrosoftEdgeUpdate"                         # Actualizador de Edge
+# WHITELIST: Procesos que NUNCA se deben cerrar
+# Todo lo que NO este aqui sera cerrado para liberar recursos
+$Script:ProcesosProtegidos = @(
+    # --- Sistema operativo (criticos) ---
+    "System", "Idle", "Registry", "smss", "csrss", "wininit",
+    "services", "lsass", "lsaiso", "svchost", "dwm", "explorer",
+    "winlogon", "fontdrvhost", "sihost", "taskhostw",
+    "RuntimeBroker", "ShellExperienceHost", "StartMenuExperienceHost",
+    "TextInputHost", "ctfmon", "conhost", "dllhost",
+    "WmiPrvSE", "SecurityHealthService", "SecurityHealthSystray",
+    "MsMpEng", "NisSrv", "SgrmBroker", "WUDFHost",
+    "dasHost", "spoolsv", "wlanext", "Memory Compression",
+    "CompPkgSrv", "backgroundTaskHost",
+    # --- Launcher / CMD (necesario para que FH5-Launcher.bat complete su ejecucion) ---
+    "cmd", "timeout",
+    # --- Audio (necesario para Spotify y juego) ---
+    "audiodg", "AudioSrv",
+    # --- Spotify ---
+    "Spotify",
+    # --- Forza Horizon 5 ---
+    "ForzaHorizon5", "forza_horizon_5", "GameLaunchHelper",
+    # --- Servicios de juegos Xbox / Microsoft Store (criticos para lanzar UWP games) ---
+    "GameInputSvc", "gamingservices", "gamingservicesnet",
+    "XblAuthManager", "XblGameSave", "XboxNetApiSvc",
+    "GamingServices", "GamingServicesNet",
+    # --- PowerShell / este script ---
+    "powershell", "pwsh", "WindowsTerminal", "OpenConsole",
+    # --- GPU / Drivers ---
+    "nvidia-smi", "nvcontainer", "NVDisplay.Container",
+    "nvtray", "nvspcaps", "NvOAWrapperCache",
+    # --- Red / VPN (mantener conectividad) ---
+    "NetworkManager",
+    # --- Utilidades de Lenovo necesarias ---
+    "LenovoVantage", "ImController", "SystemUpdate"
 )
 
 # ============================================================================
@@ -202,6 +228,26 @@ function Set-HighPerformancePower {
 function Disable-UnnecessaryServices {
     Write-Log "Desactivando servicios innecesarios temporalmente..." "INFO"
 
+    # --- Desactivar auto-proteccion de Avast si esta instalado ---
+    $avastRegPath = "HKLM:\SOFTWARE\Avast Software\Avast"
+    if (Test-Path $avastRegPath) {
+        try {
+            $selfDefense = Get-ItemProperty -Path $avastRegPath -Name "SelfDefense" -ErrorAction SilentlyContinue
+            if ($selfDefense) {
+                $Script:OriginalState["AvastSelfDefense"] = $selfDefense.SelfDefense
+            } else {
+                $Script:OriginalState["AvastSelfDefense"] = 1
+            }
+            Set-ItemProperty -Path $avastRegPath -Name "SelfDefense" -Value 0 -Type DWord -ErrorAction Stop
+            Write-Log "  [AVAST] Auto-proteccion desactivada temporalmente" "SUCCESS"
+            Start-Sleep -Seconds 2  # Dar tiempo a Avast para aplicar el cambio
+        }
+        catch {
+            Write-Log "  [AVAST] No se pudo desactivar auto-proteccion: $($_.Exception.Message)" "WARN"
+            Write-Log "  [AVAST] Tip: Desactiva la auto-proteccion manualmente desde Avast > Configuracion > General" "WARN"
+        }
+    }
+
     foreach ($svc in $Script:ServiciosOptimizables) {
         try {
             $service = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
@@ -209,15 +255,15 @@ function Disable-UnnecessaryServices {
                 # Guardar estado original
                 $Script:OriginalState["Service_$($svc.Name)"] = $service.StartType
 
-                Stop-Service -Name $svc.Name -Force -ErrorAction SilentlyContinue
+                Stop-Service -Name $svc.Name -Force -ErrorAction Stop
                 $Script:ServiciosDesactivados += $svc.Name
-                Write-Log "  [DETENIDO] $($svc.Name) — $($svc.Desc)" "SUCCESS"
+                Write-Log "  [DETENIDO] $($svc.Name) -- $($svc.Desc)" "SUCCESS"
             }
             elseif ($service) {
                 Write-Log "  [YA DETENIDO] $($svc.Name)" "INFO"
             }
             else {
-                Write-Log "  [NO ENCONTRADO] $($svc.Name) — puede no existir en tu versión" "WARN"
+                Write-Log "  [NO ENCONTRADO] $($svc.Name) -- puede no existir en tu version" "WARN"
             }
         }
         catch {
@@ -229,44 +275,55 @@ function Disable-UnnecessaryServices {
 }
 
 # ============================================================================
-# 3. OPTIMIZAR PROCESOS EN SEGUNDO PLANO
+# 3. CERRAR TODOS LOS PROCESOS NO ESENCIALES
 # ============================================================================
-# Reduce la prioridad de procesos no esenciales y cierra los que son seguros
-# de cerrar. NO toca procesos del sistema, de seguridad, ni controladores.
+# Estrategia WHITELIST: cierra TODO lo que no este en la lista de protegidos.
+# Esto garantiza que el equipo se dedique 100% a Forza y Spotify.
 
 function Optimize-BackgroundProcesses {
-    Write-Log "Optimizando procesos en segundo plano..." "INFO"
+    Write-Log "Cerrando TODOS los procesos no esenciales (modo whitelist)..." "INFO"
 
-    $reducidos = 0
+    $cerrados = 0
+    $fallidos = 0
+    $omitidos = 0
+    $myPID = $PID  # PID de este script de PowerShell
 
-    foreach ($procName in $Script:ProcesosReducibles) {
-        $procs = Get-Process -Name $procName -ErrorAction SilentlyContinue
-        foreach ($proc in $procs) {
-            try {
-                # No matamos los procesos, solo reducimos su prioridad
-                $proc.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::BelowNormal
-                $reducidos++
-            }
-            catch {
-                # Algunos procesos protegidos no permiten cambiar prioridad
-            }
+    # Obtener todos los procesos activos
+    $allProcs = Get-Process -ErrorAction SilentlyContinue
+
+    foreach ($proc in $allProcs) {
+        $name = $proc.ProcessName
+
+        # Saltar si esta en la whitelist
+        if ($name -in $Script:ProcesosProtegidos) {
+            $omitidos++
+            continue
+        }
+
+        # Nunca cerrar nuestro propio proceso
+        if ($proc.Id -eq $myPID) { continue }
+
+        # Saltar procesos del sistema (Session 0) que no tienen ventana
+        # y procesos con nombres que empiezan con prefijos de sistema
+        if ($proc.SessionId -eq 0) {
+            $omitidos++
+            continue
+        }
+
+        # Intentar cerrar el proceso
+        try {
+            $memMB = [math]::Round($proc.WorkingSet64 / 1MB, 1)
+            Stop-Process -Id $proc.Id -Force -ErrorAction Stop
+            $cerrados++
+            Write-Log "  [CERRADO] $name (PID: $($proc.Id), RAM: ${memMB} MB)" "SUCCESS"
+        }
+        catch {
+            $fallidos++
+            # Proceso protegido por el SO o ya cerrado
         }
     }
 
-    # Limpiar apps de la bandeja del sistema que no son necesarias
-    # Solo reducimos prioridad, no las cerramos
-    $trayApps = @("SecurityHealthSystray") # Solo apps seguras
-    foreach ($app in $trayApps) {
-        $proc = Get-Process -Name $app -ErrorAction SilentlyContinue
-        if ($proc) {
-            try {
-                $proc.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::BelowNormal
-                $reducidos++
-            } catch {}
-        }
-    }
-
-    Write-Log "Procesos optimizados: $reducidos con prioridad reducida" "SUCCESS"
+    Write-Log "Resultado: $cerrados cerrados | $fallidos protegidos por SO | $omitidos esenciales conservados" "SUCCESS"
 }
 
 # ============================================================================
@@ -651,7 +708,12 @@ function Optimize-NetworkLatency {
         }
 
         # Desactivar autotuning (puede causar problemas con algunos routers gaming)
-        $Script:OriginalState["NetworkAutoTuning"] = (netsh interface tcp show global | Select-String "Auto-Tuning Level").ToString().Trim()
+        $autoTuningLine = netsh interface tcp show global | Select-String "Auto-Tuning"
+        if ($autoTuningLine) {
+            $Script:OriginalState["NetworkAutoTuning"] = $autoTuningLine.ToString().Trim()
+        } else {
+            $Script:OriginalState["NetworkAutoTuning"] = "normal"
+        }
         netsh interface tcp set global autotuninglevel=disabled 2>$null | Out-Null
         Write-Log "Auto-tuning de red desactivado (reduce latencia)" "SUCCESS"
 
@@ -720,6 +782,19 @@ function Restore-AllSettings {
             Write-Log "Servicio reiniciado: $svcName" "SUCCESS"
         } catch {
             Write-Log "No se pudo reiniciar: $svcName" "WARN"
+        }
+    }
+
+    # 2b. Restaurar auto-proteccion de Avast
+    if ($Script:OriginalState.ContainsKey("AvastSelfDefense")) {
+        try {
+            $avastRegPath = "HKLM:\SOFTWARE\Avast Software\Avast"
+            if (Test-Path $avastRegPath) {
+                Set-ItemProperty -Path $avastRegPath -Name "SelfDefense" -Value $Script:OriginalState["AvastSelfDefense"] -Type DWord
+                Write-Log "Avast auto-proteccion restaurada" "SUCCESS"
+            }
+        } catch {
+            Write-Log "No se pudo restaurar auto-proteccion de Avast" "WARN"
         }
     }
 
@@ -809,6 +884,13 @@ function Start-Optimizer {
     $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
         Restore-AllSettings
     } -ErrorAction SilentlyContinue
+
+    # Trap para capturar Ctrl+C y errores terminantes
+    trap {
+        Write-Log "Interrupción detectada. Restaurando configuración..." "WARN"
+        Restore-AllSettings
+        break
+    }
 
     try {
         # ─── FASE 1: OPTIMIZACIONES ESTÁTICAS ───
@@ -920,6 +1002,9 @@ function Start-Optimizer {
     finally {
         # Siempre restaurar al salir
         Restore-AllSettings
+        Write-Host ""
+        Write-Host "  El optimizador ha finalizado. Presiona Enter para cerrar..." -ForegroundColor Yellow
+        Read-Host
     }
 }
 

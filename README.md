@@ -55,7 +55,7 @@ Este script elimina esa competencia de recursos de forma temporal y segura.
 | Característica | Descripción |
 |---|---|
 | 🔋 **Plan de energía** | Cambia a Alto Rendimiento para desbloquear Turbo Boost completo |
-| 🛑 **Gestión de servicios** | Detiene 10 servicios innecesarios durante la sesión de juego |
+| 🛑 **Gestión de servicios** | Detiene hasta 15 servicios innecesarios (incluidos SpaceDesk y Avast) durante la sesión |
 | 📊 **Prioridad de procesos** | FH5 en prioridad Alta, Spotify confinado a 2 hilos con prioridad baja |
 | 🧹 **Limpieza de RAM** | Libera working sets en momentos seguros (no durante gameplay) |
 | 💾 **Optimización de disco** | Limpia temporales y reduce escrituras innecesarias |
@@ -95,7 +95,7 @@ Este script elimina esa competencia de recursos de forma temporal y segura.
 ### Opción 1: Clonar con Git
 
 ```bash
-git clone https://github.com/TU_USUARIO/FH5-Optimizer.git
+git clone https://github.com/edav404/FH5-Optimizer.git
 ```
 
 ### Opción 2: Descargar manualmente
@@ -199,20 +199,33 @@ Si ni siquiera puedes ejecutar PowerShell:
 | Geolocalización | `lfsvc` | Servicios de ubicación |
 | Demo en tiendas | `RetailDemo` | Modo demostración (nunca necesario) |
 | Windows Insider | `wisvc` | Programa Insider de Microsoft |
+| SpaceDesk | `spacedeskService` | Pantalla virtual que consume GPU |
+| Avast Antivirus | `AvastSvc` | Motor principal del antivirus |
+| Avast WSC Reporter | `AvastWscReporter` | Reporta estado a Windows Security Center |
+| Avast IDS Agent | `aswbIDSAgent` | Sistema de detección de intrusos |
+| Avast Firewall | `AvastFirewall` | Filtrado de red del antivirus |
+
+> **Nota sobre Avast:** Los servicios de Avast tienen auto-protección. El script intenta desactivarla via registro, pero puede requerir desactivación manual desde la bandeja del sistema → "Desactivar por 1 hora".
 
 </details>
 
 <details>
-<summary><b>Procesos cuya prioridad se reduce (clic para expandir)</b></summary>
+<summary><b>Gestión de procesos: Estrategia Whitelist (clic para expandir)</b></summary>
 
-- SearchUI, SearchApp, SearchHost (búsqueda de Windows)
-- OneDrive (sincronización en la nube)
-- Teams, Widgets
-- PhoneExperienceHost, YourPhone (Tu Teléfono)
-- GameBarPresenceWriter, BcastDVRUserService (Xbox Game Bar)
-- Calculator, SkypeApp, Microsoft.Photos
-- HxTsr, HxOutlook (Correo)
-- GrooveMusic, MicrosoftEdgeUpdate
+El script usa una estrategia **whitelist** agresiva: cierra **todos** los procesos que no estén en la lista de protegidos. Esto garantiza que el equipo se dedique 100% a Forza y Spotify.
+
+**Procesos protegidos (nunca se cierran):**
+- Sistema operativo: `csrss`, `dwm`, `explorer`, `svchost`, `lsass`, etc.
+- Audio: `audiodg` (necesario para Spotify y el juego)
+- Spotify: todos los procesos de Spotify
+- Forza Horizon 5: `ForzaHorizon5`, `forza_horizon_5`, `GameLaunchHelper`
+- Servicios Xbox/MS Store: `gamingservices`, `XblAuthManager`, `XblGameSave`, etc.
+- PowerShell/Terminal: el propio script y su terminal
+- GPU/Drivers NVIDIA: `nvcontainer`, `NVDisplay.Container`, etc.
+- Launcher: `cmd`, `timeout` (para que `FH5-Launcher.bat` complete su ejecución)
+- Lenovo: `LenovoVantage`, `ImController`, `SystemUpdate`
+
+Todo lo que **no** esté en esta lista será terminado para liberar CPU y RAM.
 
 </details>
 
@@ -237,8 +250,8 @@ Si ni siquiera puedes ejecutar PowerShell:
 
 ### ❌ No hace
 
-- No desactiva Windows Defender ni el firewall
-- No elimina servicios permanentemente
+- No desactiva Windows Defender (sí intenta desactivar Avast temporalmente)
+- No elimina servicios permanentemente (solo los detiene durante la sesión)
 - No modifica archivos del juego
 - No realiza overclocking ni undervolting
 
