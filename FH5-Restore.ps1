@@ -112,7 +112,7 @@ try {
 
 # ─── 6. Restaurar Prioridades de Procesos ───
 Write-Status "Restaurando prioridades de procesos..." "INFO"
-$fh5Names = @("ForzaHorizon5", "forza_horizon_5")
+$fh5Names = @("ForzaHorizon5", "forza_horizon_5", "GameLaunchHelper")
 foreach ($name in $fh5Names) {
     $proc = Get-Process -Name $name -ErrorAction SilentlyContinue
     if ($proc) {

@@ -67,19 +67,19 @@ echo  Esperando 10 segundos para que las optimizaciones se apliquen...
 timeout /t 10 /nobreak >nul
 echo.
 
-:: ─── Paso 3: Lanzar Forza Horizon 5 ───
-echo  [4/4] Lanzando Forza Horizon 5...
+:: ─── Paso 3: Lanzar Forza Horizon 5 (Microsoft Store) ───
+echo  [4/4] Lanzando Forza Horizon 5 (Microsoft Store)...
 echo.
 
-:: Intentar lanzar FH5 via Microsoft Store
-:: El Product Family Name de FH5 en Microsoft Store:
-start "" shell:AppsFolder\Microsoft.624F8B84B80_8wekyb3d8bbwe!App 2>nul
+:: Lanzar FH5 via Microsoft Store usando PackageFamilyName + ApplicationId
+:: PackageFamilyName: Microsoft.624F8B84B80_8wekyb3d8bbwe
+:: ApplicationId: Forzahorizon5 (obtenido del manifiesto del paquete)
+start "" shell:AppsFolder\Microsoft.624F8B84B80_8wekyb3d8bbwe!Forzahorizon5 2>nul
 
-:: Si falla (ej. version Steam), intentar via Steam
 if %errorLevel% neq 0 (
-    echo  No se encontro la version de Microsoft Store.
-    echo  Intentando via Steam...
-    start "" steam://rungameid/1551360
+    echo  [ERROR] No se pudo lanzar Forza Horizon 5 desde Microsoft Store.
+    echo  Verifica que el juego esta instalado desde la Microsoft Store.
+    echo  Puedes abrirlo manualmente desde el menu Inicio.
 )
 
 echo.
@@ -88,7 +88,7 @@ echo  ║  ✓ Todo listo!                                          ║
 echo  ║                                                          ║
 echo  ║  - Spotify: Ejecutandose en segundo plano               ║
 echo  ║  - Optimizador: Monitoreando en ventana separada        ║
-echo  ║  - Forza Horizon 5: Lanzandose...                       ║
+echo  ║  - Forza Horizon 5: Lanzandose (Microsoft Store)...     ║
 echo  ║                                                          ║
 echo  ║  IMPORTANTE: No cierres la ventana del optimizador      ║
 echo  ║  hasta que termines de jugar. Al cerrarla, se            ║

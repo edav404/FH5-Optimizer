@@ -22,8 +22,14 @@ Configuración recomendada para gaming con la NVIDIA Quadro M1000M (~GTX 950M).
 
 ## Configuración del Programa (solo FH5)
 
+> **Nota (Microsoft Store):** Las apps de Microsoft Store/Xbox se manejan como paquetes UWP.
+> En el Panel de Control NVIDIA, busca **"Forza Horizon 5"** en la lista de programas.
+> Si no aparece, haz clic en **"Agregar"** → **"Examinar"** y navega a:
+> `C:\Program Files\WindowsApps\Microsoft.624F8B84B80_*\ForzaHorizon5.exe`
+> (Puede que necesites habilitar "Ver archivos ocultos" y dar permisos a la carpeta WindowsApps).
+
 1. Ir a **"Configuración 3D"** → **"Configuración del programa"**
-2. Agregar **Forza Horizon 5** (`ForzaHorizon5.exe`)
+2. Seleccionar o agregar **Forza Horizon 5**
 3. Aplicar los mismos ajustes de arriba, más:
 
 | Ajuste | Valor |

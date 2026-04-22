@@ -5,7 +5,8 @@
 
 .DESCRIPTION
     Este script optimiza Windows 10/11 específicamente para ejecutar Forza Horizon 5
-    con Spotify en segundo plano. Todas las optimizaciones son temporales y reversibles.
+    (versión Microsoft Store) con Spotify en segundo plano.
+    Todas las optimizaciones son temporales y reversibles.
 
     Funcionalidades:
     - Optimiza procesos en segundo plano sin romper funciones críticas
@@ -36,8 +37,9 @@ $Script:MonitoreoActivo = $false
 $Script:LogPath = Join-Path $PSScriptRoot "logs"
 $Script:LogFile = Join-Path $Script:LogPath "optimizer_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 
-# Nombres de proceso del juego (Microsoft Store y Steam)
-$Script:FH5Processes = @("ForzaHorizon5", "forza_horizon_5", "ForzaHorizon5.exe")
+# Nombres de proceso del juego (versión Microsoft Store)
+# GameLaunchHelper es el proceso launcher del paquete MSIX de Microsoft Store
+$Script:FH5Processes = @("ForzaHorizon5", "forza_horizon_5", "GameLaunchHelper")
 $Script:SpotifyProcess = "Spotify"
 
 # Servicios que se pueden desactivar temporalmente de forma SEGURA

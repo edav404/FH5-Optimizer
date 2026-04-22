@@ -2,7 +2,7 @@
 
 # 🏎️ FH5 Game Optimizer
 
-**Optimizador de sistema Windows para Forza Horizon 5 en hardware de gama media**
+**Optimizador de sistema Windows para Forza Horizon 5 (Microsoft Store) en hardware de gama media**
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell&logoColor=white)](https://docs.microsoft.com/en-us/powershell/)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
@@ -10,7 +10,7 @@
 
 <br>
 
-*Script automatizado que optimiza procesos, servicios, memoria y energía de Windows para maximizar el rendimiento de FH5 mientras Spotify suena en segundo plano. Todo temporal. Todo reversible.*
+*Script automatizado que optimiza procesos, servicios, memoria y energía de Windows para maximizar el rendimiento de FH5 (versión Microsoft Store) mientras Spotify suena en segundo plano. Todo temporal. Todo reversible.*
 
 </div>
 
@@ -86,7 +86,7 @@ Este script elimina esa competencia de recursos de forma temporal y segura.
 | GPU | NVIDIA Quadro M1000M (~GTX 950M) |
 | Almacenamiento | SSD NVMe 500 GB |
 
-> **Nota:** El script funciona en cualquier PC con Windows 10/11 y GPU NVIDIA, pero las configuraciones de afinidad de CPU (máscaras de bits) están calibradas para un procesador de 4 núcleos / 8 hilos. En procesadores con más núcleos, funciona igualmente pero no aprovecha los núcleos extra para la asignación de Spotify.
+> **Nota:** Este proyecto está diseñado exclusivamente para la versión de **Microsoft Store** de Forza Horizon 5. El launcher utiliza el Package Family Name del paquete MSIX para iniciar el juego. Si tienes la versión de Steam, necesitarás modificar el archivo `FH5-Launcher.bat`. Las configuraciones de afinidad de CPU están calibradas para un procesador de 4 núcleos / 8 hilos.
 
 ---
 
@@ -139,7 +139,7 @@ cd "C:\ruta\a\FH5-Optimizer"
 .\FH5-GameOptimizer.ps1
 ```
 
-Luego abre Spotify y FH5 manualmente. El script los detectará automáticamente.
+Luego abre Spotify y FH5 manualmente desde el menú Inicio. El script los detectará automáticamente.
 
 ### Método 3: Solo monitoreo (sin optimizaciones)
 
